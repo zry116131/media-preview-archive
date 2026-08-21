@@ -1,0 +1,22 @@
+[Unit]
+Description=JoyAI Visual Language Model
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/srv/ai-runtime
+Environment=LD_LIBRARY_PATH=/opt/rocm/lib:/opt/rocm/lib64
+EnvironmentFile=-%h/.config/media-workbench/hardware.env
+Environment=HF_HUB_OFFLINE=1
+Environment=TRANSFORMERS_OFFLINE=1
+Environment=FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE
+Environment=TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL=1
+Environment=TORCH_NCCL_ENABLE_MONITORING=0
+ExecStart=/srv/ai-runtime/.venv/bin/python -m vllm.entrypoints.openai.api_server --model /srv/ai-models/JoyAI-VL-Interaction-Preview --served-model-name JoyAI-VL-Interaction-Preview --host 127.0.0.1 --port 7060 --dtype bfloat16 --max-model-len 32768 --max-num-batched-tokens 8192 --gpu-memory-utilization 0.55 --max-num-seqs 2 --enforce-eager --enable-prefix-caching --mm-processor-cache-gb 1 --mm-processor-kwargs {\"max_pixels\":262144} --media-io-kwargs {\"video\":{\"num_frames\":-1}} --limit-mm-per-prompt {\"image\":12,\"video\":{\"count\":1,\"num_frames\":96,\"width\":512,\"height\":512}} --allowed-local-media-path /srv/media-workbench/data/analysis-inputs --no-enable-log-requests
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=300
+
+[Install]
+WantedBy=default.target

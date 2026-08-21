@@ -1,0 +1,15 @@
+services:
+  media-workbench:
+    build: .
+    container_name: media-workbench
+    restart: unless-stopped
+    ports:
+      - "18080:18080"
+    environment:
+      MEDIA_APP_DATA_DIR: /app/data
+      MEDIA_APP_ALLOWED_ROOTS: /media
+    volumes:
+      - ./data:/app/data
+      # 正式使用时，把 NAS 的内部 SMB 挂载目录映射到 /media。
+      # - /mnt/media:/media:ro
+

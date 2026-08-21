@@ -1,0 +1,22 @@
+[Unit]
+Description=Qwen3 Text Storyboard Planner
+After=network-online.target joyai-vllm.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/srv/ai-runtime
+Environment=LD_LIBRARY_PATH=/opt/rocm/lib:/opt/rocm/lib64
+EnvironmentFile=-%h/.config/media-workbench/hardware.env
+Environment=HF_HUB_OFFLINE=1
+Environment=TRANSFORMERS_OFFLINE=1
+Environment=FLASH_ATTENTION_TRITON_AMD_ENABLE=TRUE
+Environment=TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL=1
+Environment=TORCH_NCCL_ENABLE_MONITORING=0
+ExecStart=/srv/ai-runtime/.venv/bin/python -m vllm.entrypoints.openai.api_server --model /srv/ai-models/Qwen3-4B --served-model-name Qwen3-4B --host 127.0.0.1 --port 7061 --dtype bfloat16 --max-model-len 8192 --gpu-memory-utilization 0.18 --max-num-seqs 1 --enforce-eager --enable-prefix-caching --no-enable-log-requests
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=300
+
+[Install]
+WantedBy=default.target

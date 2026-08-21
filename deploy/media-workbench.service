@@ -1,0 +1,26 @@
+[Unit]
+Description=AI NAS Media Workbench
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/srv/media-workbench/app
+Environment=PYTHONUNBUFFERED=1
+Environment=MEDIA_APP_DATA_DIR=/srv/media-workbench/data
+Environment=JOYAI_ENDPOINT=http://127.0.0.1:7060/v1
+Environment=JOYAI_MODEL=JoyAI-VL-Interaction-Preview
+Environment=ANALYSIS_TEMP_DIR=/srv/media-workbench/data/analysis-inputs
+Environment=FFMPEG_VAAPI_DEVICE=/dev/dri/renderD128
+Environment=TEXT_LLM_ENDPOINT=http://127.0.0.1:7061/v1
+Environment=TEXT_LLM_MODEL=Qwen3-4B
+Environment=MEDIA_APP_SMB_SERVER=192.0.2.20
+Environment=MEDIA_APP_SMB_SHARE=素材库
+Environment=MEDIA_APP_SMB_MOUNT_ROOT=/mnt/content
+EnvironmentFile=-%h/.config/media-workbench/nas.env
+ExecStart=/usr/bin/python3 /srv/media-workbench/app/app/server.py --host 0.0.0.0 --port 18080
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

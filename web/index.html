@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FRAMEFIND · AI 素材工作台</title>
+  <meta name="theme-color" content="#141714">
+  <link rel="stylesheet" href="/styles.css?v=0.11.5">
+</head>
+<body>
+  <div class="noise"></div>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i></span>
+        <div><strong>Framefind</strong><small>AI MEDIA INDEX</small></div>
+      </div>
+      <nav class="nav-stack">
+        <button class="nav-item active" data-view="library"><span>01</span>素材库</button>
+        <button class="nav-item" data-view="script"><span>02</span>文案分镜</button>
+        <button class="nav-item" data-view="tasks"><span>03</span>任务中心</button>
+        <button class="nav-item" data-view="ai"><span>04</span>AI 设置</button>
+      </nav>
+      <div class="machine-card">
+        <span class="status-dot"></span>
+        <div><strong>本地 AI 服务</strong><small>私有推理节点</small></div>
+      </div>
+      <div class="phase-label">BUILD 0.11.5 · DEMO READY</div>
+    </aside>
+
+    <main class="main-stage">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow"><span></span> LOCAL / SMB / PRIVATE</p>
+          <h1 id="view-title">素材索引</h1>
+          <p class="view-intro">让散落的画面，重新进入创作流程。</p>
+        </div>
+        <div class="top-actions">
+          <button id="add-project" class="button primary">＋ 新建项目</button>
+        </div>
+      </header>
+
+      <section id="library-view" class="view active">
+        <div class="project-context-bar">
+          <div class="project-context-copy">
+            <span>CURRENT PROJECT</span>
+            <select id="project-select" aria-label="当前项目"></select>
+          </div>
+          <div class="project-operations" aria-label="当前项目操作">
+            <span class="operation-label">项目操作</span>
+            <button id="scan-project" class="button ghost">刷新素材</button>
+            <button id="thumbnail-project" class="button ghost">补齐预览图</button>
+            <button id="analyze-project" class="button primary" disabled>JoyAI 分析 <span>↗</span></button>
+          </div>
+        </div>
+        <div class="metrics-grid">
+          <article class="metric hero-metric"><span>PROJECT SIZE</span><strong id="metric-size">—</strong><small id="project-path">尚未配置项目</small><small id="storage-status" class="storage-health" data-state="checking">正在检查存储</small><i>01</i></article>
+          <article class="metric"><span>全部素材</span><strong id="metric-total">0</strong><small>已建立目录索引</small></article>
+          <article class="metric"><span>视频 / 图片</span><strong id="metric-types">0 / 0</strong><small>支持常见现场格式</small></article>
+          <article class="metric"><span>待分析</span><strong id="metric-pending">0</strong><small id="ai-metric-note">正在检查 JoyAI 状态</small></article>
+        </div>
+
+        <div class="library-toolbar">
+          <div class="toolbar-filter-group">
+            <span class="toolbar-filter-label">素材类型</span>
+            <div class="segmented" role="group" aria-label="素材类型">
+              <button class="filter active" data-type="">全部</button>
+              <button class="filter" data-type="video">视频</button>
+              <button class="filter" data-type="image">图片</button>
+            </div>
+          </div>
+          <div class="toolbar-filter-group">
+            <span class="toolbar-filter-label">AI 状态</span>
+            <div class="segmented analysis-segmented" role="group" aria-label="AI 分析状态">
+              <button class="analysis-filter active" data-analysis="">全部</button>
+              <button class="analysis-filter" data-analysis="failed">异常</button>
+              <button class="analysis-filter" data-analysis="exempted">已排除</button>
+              <button class="analysis-filter" data-analysis="pending">待分析</button>
+              <button class="analysis-filter" data-analysis="completed">已分析</button>
+            </div>
+          </div>
+          <label class="search-box"><span>⌕</span><input id="asset-search" placeholder="搜索文件名或目录"></label>
+          <span id="asset-count" class="result-count">0 RESULTS</span>
+        </div>
+
+        <div id="empty-state" class="empty-state">
+          <div class="empty-glyph">＋</div>
+          <h2>连接第一个素材项目</h2>
+          <p>创建项目后，刷新内部 SMB 挂载目录。系统只读取素材，不修改原文件。</p>
+          <button class="button primary" id="empty-add-project">创建项目</button>
+        </div>
+        <div id="asset-grid" class="asset-groups"></div>
+        <div class="load-more-row"><button id="asset-load-more" class="button ghost" hidden>加载更多素材</button></div>
+      </section>
+
+      <section id="script-view" class="view">
+        <section id="storyboard-gate" class="storyboard-gate" aria-live="polite" hidden>
+          <div class="storyboard-gate-copy">
+            <p class="eyebrow">WORKFLOW GATE / MATERIAL READINESS</p>
+            <h2 id="storyboard-gate-title">素材准备尚未完成</h2>
+            <p id="storyboard-gate-message">完成项目扫描和素材分析后，才能进入分镜生成与素材匹配。</p>
+          </div>
+          <div class="storyboard-gate-status" aria-label="分镜前置条件">
+            <article class="storyboard-gate-status-item" data-state="checking">
+              <span>01 / SCAN</span>
+              <strong id="storyboard-gate-scan-status">正在检查扫描状态</strong>
+              <small>项目目录已建立最新索引</small>
+            </article>
+            <article class="storyboard-gate-status-item" data-state="checking">
+              <span>02 / ASSETS</span>
+              <strong id="storyboard-gate-asset-status">正在检查素材数量</strong>
+              <small>索引中存在可用的视频或图片</small>
+            </article>
+            <article class="storyboard-gate-status-item" data-state="checking">
+              <span>03 / ANALYSIS</span>
+              <strong id="storyboard-gate-analysis-status">正在检查分析进度</strong>
+              <small>当前素材均已完成 JoyAI 理解</small>
+            </article>
+          </div>
+          <div class="storyboard-gate-actions">
+            <button id="storyboard-gate-primary" class="button primary">前往准备素材</button>
+            <button id="storyboard-gate-exceptions" class="button danger-outline" hidden>查看异常素材</button>
+            <button id="storyboard-gate-tasks" class="button ghost">查看任务中心</button>
+          </div>
+        </section>
+        <div class="storyboard-toolbar">
+          <div class="storyboard-context-row">
+            <div class="toolbar-section-mark"><span>01</span><strong>工作版本</strong></div>
+            <label class="storyboard-picker">分镜册
+              <select id="storyboard-select"><option value="">尚未创建</option></select>
+            </label>
+            <label class="storyboard-picker version-picker">生成版本
+              <select id="storyboard-version-select" disabled><option value="">尚无版本</option></select>
+              <small id="storyboard-version-meta">每次成功生成都会保留</small>
+            </label>
+            <div class="storyboard-management-actions" aria-label="分镜册管理">
+              <button id="new-storyboard" class="button ghost">＋ 新建分镜册</button>
+              <button id="delete-storyboard" class="button danger-outline" disabled>删除分镜册</button>
+            </div>
+          </div>
+          <div class="storyboard-tool-row">
+            <div class="toolbar-tool-group">
+              <span>导入</span>
+              <button id="import-script" class="button ghost">文案文件</button>
+              <button id="import-shots" class="button ghost">分镜清单</button>
+            </div>
+            <span class="toolbar-spacer"></span>
+            <div class="toolbar-tool-group">
+              <span>查看</span>
+              <button id="preview-storyboard" class="button ghost">分镜预览</button>
+            </div>
+            <div class="toolbar-tool-group export-group">
+              <span>导出</span>
+              <button class="button ghost export-storyboard" data-format="md">MD</button>
+              <button class="button ghost export-storyboard" data-format="csv">CSV</button>
+              <button class="button ghost export-storyboard" data-format="json">JSON</button>
+            </div>
+          </div>
+          <input id="script-file" type="file" accept=".txt,.md,.markdown,.srt,.docx,.pdf" hidden>
+          <input id="shots-file" type="file" accept=".json,.csv" hidden>
+        </div>
+        <div class="script-layout">
+          <article class="script-panel">
+            <div class="panel-heading"><span>INPUT</span><h2>文案输入</h2></div>
+            <label class="storyboard-title-label">分镜册名称
+              <input id="storyboard-title" placeholder="例如：品牌短片第一版">
+            </label>
+            <textarea id="script-input" placeholder="把口播、旁白或完整脚本文案粘贴到这里……"></textarea>
+            <div class="script-actions"><span id="storyboard-save-state">粘贴内容会自动保存</span><button id="split-script" class="button primary">生成并匹配素材</button></div>
+            <p class="format-note">文案：TXT / Markdown / SRT / DOCX / PDF　·　分镜：JSON / CSV</p>
+          </article>
+          <article class="shots-panel">
+            <div class="panel-heading"><span>SHOT LIST</span><h2>分镜与素材对应</h2></div>
+            <div class="shot-header"><span>镜号</span><span>文案 / 画面需求</span><span>素材匹配</span></div>
+            <div id="shot-list" class="shot-list"><p class="muted-note">新建分镜册，直接粘贴或导入文案。</p></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="tasks-view" class="view">
+        <div class="panel-heading"><span>BACKGROUND JOBS</span><h2>任务中心</h2></div>
+        <div id="task-list" class="task-list"></div>
+      </section>
+
+      <section id="ai-view" class="view">
+        <div class="ai-category-tabs" role="tablist" aria-label="AI 能力分类">
+          <button class="ai-category-tab active" data-ai-category="visual" role="tab" aria-selected="true"><span>01</span><strong>视频理解</strong><small>素材内容识别与检索标签</small></button>
+          <button class="ai-category-tab" data-ai-category="text" role="tab" aria-selected="false"><span>02</span><strong>文案分镜</strong><small>脚本拆解与素材匹配规划</small></button>
+        </div>
+
+        <div id="ai-visual-category" class="ai-category-panel active" role="tabpanel">
+          <div class="ai-layout">
+            <article class="ai-status-panel">
+              <div class="panel-heading"><span>INFERENCE STATUS</span><h2>JoyAI 视频理解</h2></div>
+              <div class="ai-state-line"><span id="ai-state-dot" class="ai-state-dot"></span><strong id="ai-state-label">正在检查</strong></div>
+              <p id="ai-status-message" class="muted-note">正在读取本地推理服务。</p>
+              <button id="check-ai" class="button ghost">重新检测服务</button>
+            </article>
+            <article class="ai-config-panel">
+              <div class="panel-heading"><span>MODEL</span><h2>视频理解配置</h2></div>
+              <label class="setting-field">视频理解模型
+                <select id="ai-model-select">
+                  <option value="JoyAI-VL-Interaction-Preview">JoyAI-VL-Interaction Preview · 8B 级</option>
+                </select>
+              </label>
+              <label class="setting-field">推理服务地址
+                <input id="ai-endpoint" readonly value="尚未部署">
+              </label>
+              <div class="strategy-matrix" aria-label="JoyAI 自动分流策略">
+                <div class="strategy-matrix-head"><span>素材时长</span><span>处理策略</span></div>
+                <div><strong>≤ 30 秒</strong><span>整段理解 · 2 FPS</span></div>
+                <div><strong>30 秒–2 分钟</strong><span>普通源整段限帧；高规格源 60 秒分段</span></div>
+                <div><strong>2–10 分钟</strong><span>60 秒分段 · 2 秒重叠</span></div>
+                <div><strong>&gt; 10 分钟</strong><span>90 秒分段 · 3 秒重叠</span></div>
+              </div>
+              <p class="setting-help">推理服务仅在内部节点运行。4K 与高帧率素材会生成临时降尺寸、降采样的分析片段，不修改 NAS 原文件；原生视频失败时仅对失败片段降级抽帧。</p>
+            </article>
+            <article class="ai-roadmap-panel">
+              <div class="panel-heading"><span>ACTIVATION GATE</span><h2>运行链路</h2></div>
+              <ol class="gate-list">
+                <li><span>01</span><div><strong>本地推理环境</strong><small>视觉理解运行环境已就绪</small></div></li>
+                <li><span>02</span><div><strong>JoyAI 服务</strong><small>8B 级视觉模型已启用图片与视频输入</small></div></li>
+                <li><span>03</span><div><strong>素材管线</strong><small>多帧理解、摘要与关键词回写</small></div></li>
+              </ol>
+            </article>
+          </div>
+        </div>
+
+        <div id="ai-text-category" class="ai-category-panel" role="tabpanel">
+          <div class="text-ai-layout">
+            <article class="text-model-status-card">
+              <div class="panel-heading"><span>PLANNER STATUS</span><h2>文案分镜模型</h2></div>
+              <div class="ai-state-line"><span id="text-state-dot" class="ai-state-dot"></span><strong id="text-state-label">正在检查</strong></div>
+              <p id="text-status-message" class="muted-note">正在读取文案规划服务。</p>
+              <div class="provider-summary">
+                <span id="text-provider-summary">LOCAL</span>
+                <strong id="text-model-summary">Qwen3-4B</strong>
+              </div>
+            </article>
+
+            <article class="text-model-config-card">
+              <div class="panel-heading"><span>PROVIDER</span><h2>接入与模型配置</h2></div>
+              <form id="text-model-form">
+                <label class="setting-field">模型来源
+                  <select id="text-provider" name="provider">
+                    <option value="local">本地模型</option>
+                    <option value="deepseek">DeepSeek API</option>
+                    <option value="custom">自定义 OpenAI 兼容 API</option>
+                  </select>
+                </label>
+                <label class="setting-field">API 地址
+                  <input id="text-endpoint" name="endpoint" inputmode="url" autocomplete="url" placeholder="https://api.example.com/v1">
+                </label>
+                <label class="setting-field">模型名称
+                  <input id="text-model-name" name="model" list="text-model-options" autocomplete="off" placeholder="例如：deepseek-v4-flash">
+                  <datalist id="text-model-options">
+                    <option value="Qwen3-4B"></option>
+                    <option value="deepseek-v4-flash"></option>
+                    <option value="deepseek-v4-pro"></option>
+                  </datalist>
+                </label>
+                <label class="setting-field">API Key
+                  <input id="text-api-key" name="api_key" type="password" autocomplete="new-password" placeholder="仅在服务端保存">
+                  <small id="text-key-help">本地模型不需要 API Key。</small>
+                </label>
+                <div id="text-config-message" class="config-message" role="status"></div>
+                <div class="config-actions">
+                  <button id="test-text-model" type="button" class="button ghost">测试连接</button>
+                  <button id="save-text-model" type="submit" class="button primary">保存并启用</button>
+                </div>
+              </form>
+            </article>
+
+            <aside class="text-model-notice">
+              <span>DATA BOUNDARY</span>
+              <h3>先明确数据去向</h3>
+              <p>使用本地模型时，文案仅在内部节点处理；选择 DeepSeek 或自定义云端 API 后，生成分镜时会把导入的文案发送给对应服务商。API Key 只保存在网站后端，不会回传到浏览器。</p>
+            </aside>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="project-dialog">
+    <form id="project-form">
+      <div class="dialog-kicker">NEW INDEX</div>
+      <h2>新建素材项目</h2>
+      <p>直接粘贴 Windows 资源管理器中的 NAS 地址，系统会自动匹配内部挂载目录。原始素材保持只读。</p>
+      <label>项目名称<input name="name" required placeholder="例如：川西拍摄 2026"></label>
+      <label>Windows 项目地址<input name="smb_url" required placeholder="例如：\\192.0.2.20\素材库\摄影组临时素材"></label>
+      <div id="form-error" class="form-error"></div>
+      <div class="dialog-actions"><button type="button" class="button ghost" id="cancel-project">取消</button><button type="submit" class="button primary" id="save-project">保存项目</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="analysis-dialog" class="analysis-dialog">
+    <form id="analysis-form">
+      <div class="dialog-kicker">JOYAI BATCH</div>
+      <h2>选择本次分析范围</h2>
+      <p>任务会记录本批素材清单和完成位置，暂停、服务重启后都可以继续。</p>
+      <p class="analysis-routing-note"><strong>自动分流已开启</strong><span>系统会按素材类型、时长、分辨率和帧率自动选择整段或分段理解策略。</span></p>
+      <div class="analysis-form-grid">
+        <label>分析状态
+          <select name="scope">
+            <option value="pending">待分析及失败素材</option>
+            <option value="failed">仅重试失败素材</option>
+            <option value="all">重新分析全部素材</option>
+          </select>
+        </label>
+        <label>素材类型
+          <select name="media_type">
+            <option value="all">视频和图片</option>
+            <option value="video">仅视频</option>
+            <option value="image">仅图片</option>
+          </select>
+        </label>
+        <label>项目内文件夹
+          <input name="folder_prefix" placeholder="留空表示整个项目，例如：2.原始素材">
+        </label>
+        <label>本批数量
+          <select name="limit">
+            <option value="25">25 条</option>
+            <option value="50" selected>50 条</option>
+            <option value="100">100 条</option>
+            <option value="0">全部符合条件的素材</option>
+          </select>
+        </label>
+        <label>最小时长（秒）
+          <input name="min_duration" type="number" min="0" step="1" placeholder="不限">
+        </label>
+        <label>最大时长（秒）
+          <input name="max_duration" type="number" min="0" step="1" placeholder="不限">
+        </label>
+      </div>
+      <div id="analysis-form-error" class="form-error"></div>
+      <div class="dialog-actions"><button type="button" class="button ghost" id="cancel-analysis">取消</button><button type="submit" class="button primary">创建分析任务</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="delete-storyboard-dialog" class="delete-storyboard-dialog">
+    <form id="delete-storyboard-form">
+      <div class="dialog-kicker danger-kicker">STORYBOARD MANAGEMENT</div>
+      <h2>删除分镜册？</h2>
+      <p id="delete-storyboard-summary">这本分镜册及其生成版本将被永久删除。</p>
+      <div class="delete-storyboard-impact">
+        <span>即将永久删除</span>
+        <strong id="delete-storyboard-title">未命名分镜</strong>
+        <small><b id="delete-storyboard-shot-count">0</b> 条分镜 · <b id="delete-storyboard-version-count">0</b> 个生成版本 · 全部素材选择记录</small>
+      </div>
+      <p class="delete-storyboard-note">NAS 中的原始视频和图片不会受到影响，但分镜册删除后无法恢复。需要留档时请先导出。</p>
+      <div id="delete-storyboard-error" class="form-error"></div>
+      <div class="dialog-actions">
+        <button type="button" class="button ghost" id="cancel-delete-storyboard">取消</button>
+        <button type="submit" class="button danger" id="confirm-delete-storyboard">永久删除</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="asset-exemption-dialog" class="asset-exemption-dialog">
+    <form id="asset-exemption-form">
+      <div class="dialog-kicker danger-kicker">ANALYSIS EXCEPTION</div>
+      <h2>排除这条异常素材？</h2>
+      <p>仅在确认素材损坏、无法解码或本项目不需要使用时排除。建议先重试一次。</p>
+      <div class="asset-exemption-target">
+        <span>当前素材</span>
+        <strong id="asset-exemption-name">—</strong>
+        <small id="asset-exemption-error">JoyAI 无法读取分析画面</small>
+      </div>
+      <label>排除原因
+        <select name="reason" required>
+          <option value="">请选择原因</option>
+          <option value="文件损坏或内容不完整">文件损坏或内容不完整</option>
+          <option value="编码或封装暂不支持">编码或封装暂不支持</option>
+          <option value="本项目不使用这条素材">本项目不使用这条素材</option>
+          <option value="其他已确认异常">其他已确认异常</option>
+        </select>
+      </label>
+      <label>补充说明（可选）
+        <input name="details" maxlength="120" placeholder="例如：现场产生的 1 KB 占位文件">
+      </label>
+      <p class="asset-exemption-note">不会删除或修改 NAS 原文件，也不会让这条素材进入分镜匹配。若文件内容之后发生变化，重新扫描会自动撤销排除并重新进入待分析。</p>
+      <div id="asset-exemption-form-error" class="form-error"></div>
+      <div class="dialog-actions">
+        <button type="button" class="button ghost" id="cancel-asset-exemption">取消</button>
+        <button type="submit" class="button danger" id="confirm-asset-exemption">确认排除</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="storyboard-preview" class="storyboard-preview-dialog">
+    <div class="preview-dialog-head">
+      <div><span class="dialog-kicker">STORYBOARD PREVIEW</span><h2 id="preview-title">分镜预览</h2></div>
+      <button id="close-storyboard-preview" class="drawer-close" aria-label="关闭">×</button>
+    </div>
+    <div id="preview-content" class="preview-content"></div>
+  </dialog>
+
+  <aside id="asset-drawer" class="asset-drawer" aria-hidden="true" inert>
+    <button class="drawer-close" id="drawer-close" aria-label="关闭">×</button>
+    <div id="drawer-media" class="drawer-media"></div>
+    <div id="drawer-body" class="drawer-body"></div>
+  </aside>
+  <div id="toast" class="toast" role="status"></div>
+  <script src="/app.js?v=0.11.5" defer></script>
+</body>
+</html>

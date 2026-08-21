@@ -1,0 +1,14 @@
+[Unit]
+Description=Read-only NAS content SMB mount
+After=network-online.target
+Wants=network-online.target
+
+[Mount]
+What=//192.0.2.20/素材库
+Where=/mnt/content
+Type=cifs
+Options=credentials=/etc/media-workbench/smb-credentials,uid=1000,gid=1000,file_mode=0640,dir_mode=0750,vers=3.1.1,iocharset=utf8,ro,noperm,cache=strict,actimeo=1,echo_interval=30,_netdev
+TimeoutSec=30
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,32 @@
+# macOS and editor files
+.DS_Store
+.idea/
+.vscode/
+
+# Python caches and local environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Runtime data and credentials
+data/
+*.db
+*.db-shm
+*.db-wal
+.env
+.env.*
+!.env.example
+credentials
+.credentials
+
+# Node/Vite build output
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Logs and temporary files
+*.log
+tmp/
+temp/
